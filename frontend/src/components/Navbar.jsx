@@ -20,6 +20,8 @@ export default function Navbar() {
       <Link to="/" className="font-bold text-xl">CourtBooking</Link>
       <div className="space-x-4 flex items-center">
         <Link to="/">Home</Link>
+        <Link to="/courts">Courts</Link>
+        <Link to="/booking">Booking</Link>
         <Link to="/my-bookings">My Bookings</Link>
         {user ? <LogoutButton /> : <LoginButton />}
       </div>

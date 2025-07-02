@@ -15,7 +15,8 @@ const courtRoutes = require("./routes/court");
 app.use("/api/courts", courtRoutes);
 const bookingRoutes = require("./routes/booking");
 app.use("/api/bookings", bookingRoutes);
-
+const availabilityRoutes = require("./routes/availability");
+app.use("/api/courts/availability", availabilityRoutes);
 
 app.get("/", async (req, res) => {
   try {

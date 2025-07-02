@@ -1,27 +1,24 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
-import HomePage from "./pages/HomePage";
-import CourtDetailPage from "./pages/CourtDetailPage";
-import CourtsPage from "./pages/CourtsPage";
-import BookingPage from "./pages/BookingPage";
-import MyBookingsPage from "./pages/MyBookingsPage";
-import AdminBookingsPage from "./pages/AdminBookingsPage";
-
-
+import SelectSportPage from "./pages/SelectSportPage";
+import SelectTimePage from "./pages/SelectTimePage";
+import SelectCourtPage from "./pages/SelectCourtPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import BookSuccessPage from "./pages/BookSuccessPage";
+import UserInfoBar from "./components/UserInfoBar";
 function App() {
   return (
+    
     <Router>
-      <Navbar />
-
+      <UserInfoBar />
       <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<HomePage />} />
-        <Route path="/court/:id" element={<CourtDetailPage />} />
-        <Route path="/courts" element={<CourtsPage />} />
-        <Route path="/booking" element={<BookingPage />} />
-        <Route path="/my-bookings" element={<MyBookingsPage />} />
-        <Route path="/admin/bookings" element={<AdminBookingsPage />} />
+        <Route path="/select-sport" element={<SelectSportPage />} />
+        <Route path="/select-time" element={<SelectTimePage />} />
+        <Route path="/select-court" element={<SelectCourtPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/success" element={<BookSuccessPage />} />
       </Routes>
     </Router>
   );

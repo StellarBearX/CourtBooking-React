@@ -1,47 +1,115 @@
-import { useParams, useNavigate } from "react-router-dom";
+// src/pages/CourtDetailPage.jsx
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
-const mockCourts = [
-  {
-    id: "1",
-    name: "สนามแบดมินตัน CMU",
-    location: "มหาวิทยาลัยเชียงใหม่",
-    image: "https://via.placeholder.com/600x300?text=Court+1",
-    slots: ["08:00-09:00", "09:00-10:00", "10:00-11:00"],
-  },
-  {
-    id: "2",
-    name: "สนามฟุตบอล 5",
-    location: "ลำพูน",
-    image: "https://via.placeholder.com/600x300?text=Court+2",
-    slots: ["15:00-16:00", "16:00-17:00", "17:00-18:00"],
-  },
+const TIME_SLOTS = [
+  "17:00-18:00",
+  "18:00-19:00",
+  "19:00-20:00",
 ];
 
-export default function CourtDetailPage() {
+const CourtDetailPage = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const court = mockCourts.find((c) => c.id === id);
+  const [user, setUser] = useState(null);
+  const [date, setDate] = useState("");
+  const [status, setStatus] = useState({});
+  const [message, setMessage] = useState("");
 
-  if (!court) return <h2 className="text-center mt-10">ไม่พบข้อมูลสนาม</h2>;
+  useEffect(() => {
+    const auth = getAuth();
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (date) {
+      checkSlotStatus();
+    }
+  }, [date]);
+
+  const checkSlotStatus = async () => {
+    const slotStatuses = {};
+
+    for (const time_slot of TIME_SLOTS) {
+      const res = await fetch("http://localhost:5001/api/courts/availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_date: date, time_slot }),
+      });
+      const data = await res.json();
+      const court = data.find((c) => c.court_id === parseInt(id));
+      slotStatuses[time_slot] = court ? court.available : false;
+    }
+    setStatus(slotStatuses);
+  };
+
+  const handleBooking = async (timeSlot) => {
+    if (!user) return alert("กรุณา Login ก่อน");
+    const token = await user.getIdToken();
+
+    const res = await fetch("http://localhost:5001/api/bookings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        court_id: parseInt(id),
+        booking_date: date,
+        time_slot: timeSlot,
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      setMessage(`✅ จองสำเร็จ: ${data.booking_date} ${data.time_slot}`);
+      checkSlotStatus();
+    } else {
+      const err = await res.json();
+      setMessage(`❌ ไม่สามารถจองได้: ${err.error}`);
+    }
+  };
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
-      <img src={court.image} alt={court.name} className="w-full rounded shadow mb-4" />
-      <h1 className="text-2xl font-bold">{court.name}</h1>
-      <p className="text-gray-600 mb-4">{court.location}</p>
+    <div className="max-w-2xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4">📍 สนามหมายเลข {id}</h1>
 
-      <h2 className="text-xl font-semibold mb-2">ช่วงเวลาที่เปิดจอง:</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {court.slots.map((slot, idx) => (
-          <button
-            key={idx}
-            onClick={() => navigate(`/booking/${id}?slot=${encodeURIComponent(slot)}`)}
-            className="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600"
+      <label className="block mb-2">เลือกวันที่:</label>
+      <input
+        type="date"
+        className="border p-2 rounded mb-4 w-full"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+      />
+
+      <h2 className="text-lg font-semibold mb-2">⏰ เลือกช่วงเวลาที่ต้องการจอง:</h2>
+      <div className="space-y-3">
+        {TIME_SLOTS.map((slot) => (
+          <div
+            key={slot}
+            className="flex justify-between items-center border p-3 rounded shadow"
           >
-            {slot}
-          </button>
+            <span>{slot}</span>
+            {status[slot] === false ? (
+              <span className="text-red-500 font-medium">❌ เต็ม</span>
+            ) : (
+              <button
+                onClick={() => handleBooking(slot)}
+                className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700"
+              >
+                📌 จอง
+              </button>
+            )}
+          </div>
         ))}
       </div>
+
+      {message && <p className="mt-4 text-center font-medium">{message}</p>}
     </div>
   );
-}
+};
+
+export default CourtDetailPage;

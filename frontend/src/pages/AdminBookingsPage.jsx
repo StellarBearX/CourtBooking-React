@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import LoginButton from "../components/LoginButton";
 import LogoutButton from "../components/LogoutButton";
+import '../index.css';
 
 const AdminBookingsPage = () => {
   const [user, setUser] = useState(null);

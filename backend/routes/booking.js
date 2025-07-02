@@ -68,5 +68,22 @@ router.delete("/:id", verifyToken, isAdmin, async (req, res) => {
   }
 });
 
+router.get("/", async (req, res) => {
+  const { date, time } = req.query;
+  if (!date || !time) {
+    return res.status(400).json({ error: "Missing date or time" });
+  }
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM bookings WHERE booking_date = $1 AND time_slot = $2",
+      [date, time]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Error fetching bookings:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 module.exports = router;
